@@ -1,32 +1,17 @@
-import javax.swing.*;
+/**
+ * This program is designed to allow users to enter the amount of ingredients they have and receive a total amount of
+ * soups and any transmutations needed to maximise soup amount.
+ *
+ * Written by Aaron Proctor
+ *
+ * Start Date: April 7, 2018
+ * Last Edited: April 11, 2018
+ */
+
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class SharkSoupCalc {
-    /**
-     * This method gets the index of the smallest numbers
-     *
-     * @param arr
-     * @param value
-     * @return
-     *
-     * Source: https://stackoverflow.com/a/34173462
-     */
-    public static int getArrayIndex(int[] arr, int value) {
-
-
-        int k = 0;
-        for (int i = 0; i < arr.length; i++) {
-
-            if (arr[i] == value) {
-                k = i;
-                break;
-            }
-        }
-        return k;
-    }
-
-
 
     /**
      * This method finds the smallest 2 numbers and their index
@@ -40,7 +25,7 @@ public class SharkSoupCalc {
         int smallest = Integer.MAX_VALUE;
         int secondSmallest = Integer.MAX_VALUE;
 
-        for (int i = 0; i < soupIngredients.length - 2; i++) {
+        for (int i = 0; i < soupIngredients.length - 5; i++) {
             if (smallest > soupIngredients[i]) {
                 smallestItem = i;
                 smallest = soupIngredients[i];
@@ -48,7 +33,7 @@ public class SharkSoupCalc {
 
         }
 
-        for (int i = 0; i < soupIngredients.length - 2; i++) {
+        for (int i = 0; i < soupIngredients.length - 5; i++) {
             if (i == smallestItem) ;     // Skip this value, don't want a repeat of smallest
             else if (secondSmallest > soupIngredients[i] && soupIngredients[i] >= smallest) {
                 secondItem = i;
@@ -59,13 +44,13 @@ public class SharkSoupCalc {
 
         // If the two smallest items are shells and oil, set oil to smallest and find next smallest
         if (smallestItem == 0 && secondItem == 1) {
-            smallestItem = 1;
-            smallest = secondSmallest;
+//            smallestItem = 1;
+//            smallest = secondSmallest;
 
             secondItem = 2;
             secondSmallest = soupIngredients[2];
 
-            for (int i = 3; i < soupIngredients.length - 2; i++) {
+            for (int i = 3; i < soupIngredients.length - 5; i++) {
                 if (soupIngredients[i] < secondSmallest) {
                     secondItem = i;
                     secondSmallest = soupIngredients[i];
@@ -117,22 +102,26 @@ public class SharkSoupCalc {
      * This method is for calculating the transmutation of oil from salt
      *
      * @param soupIngredients
-     * @param smallestItemArray
      * @return
      */
-    private static int[] calculateOilTransmutation(int[] soupIngredients, int[] smallestItemArray) {
+    private static int[] calculateOilTransmutation(int[] soupIngredients) {
         int saltAmount = soupIngredients[2];
         int oilAmount = soupIngredients[1];
         int energyAmount = soupIngredients[5];
         int transmuteAmount = 0;
+        int[] smallestItemArray = findSmallestNumbers(soupIngredients);
 
         // While oil + 10 is less than the second smallest amount and oil + 30 is less than salt amount and energy
-        // amount is greater than 10
-        while ((oilAmount + 10 <= smallestItemArray[3]) && (oilAmount + 30 <= saltAmount) && (energyAmount >= 20)) {
+        // amount is greater than 20
+        while ( (oilAmount + 10 <= smallestItemArray[3]) &&
+                (oilAmount + 20 <= saltAmount) &&
+                (energyAmount >= 20) &&
+                (soupIngredients[0] > 0 || (soupIngredients[2] >= 40 && energyAmount >= 50) || soupIngredients[1] == 10)) {
             saltAmount -= 20;
             oilAmount += 10;
             energyAmount -= 20;
             transmuteAmount++;
+            smallestItemArray = findSmallestNumbers(soupIngredients);
         }
 
         soupIngredients[2] = saltAmount;
@@ -148,23 +137,24 @@ public class SharkSoupCalc {
      * This method is for calculating the transmutation of shells from oil
      *
      * @param soupIngredients
-     * @param smallestItemArray
      * @return
      */
-    private static int[] calculateShellsTransmutation(int[] soupIngredients, int[] smallestItemArray) {
+    private static int[] calculateShellsTransmutation(int[] soupIngredients) {
 
         int shellAmount = soupIngredients[0];
         int oilAmount = soupIngredients[1];
         int energyAmount = soupIngredients[5];
         int transmuteAmount = 0;
+        int[] smallestItemArray = findSmallestNumbers(soupIngredients);
 
         // While shell + 10 is less than the second smallest amount and shell+10 is less than oil amount and energy
         // amount is greater than 10
-        while ((shellAmount + 10 <= smallestItemArray[3]) && (shellAmount + 10 <= oilAmount) && (energyAmount >= 10)) {
+        while ((shellAmount + 10 <= smallestItemArray[3]) && (shellAmount + 10 < oilAmount) && (energyAmount >= 10)) {
             oilAmount -= 10;
             shellAmount += 10;
             energyAmount -= 10;
             transmuteAmount++;
+            smallestItemArray = findSmallestNumbers(soupIngredients);
         }
 
         soupIngredients[0] = shellAmount;
@@ -183,8 +173,9 @@ public class SharkSoupCalc {
         String[] soupIngredientsNames = {"Shiny tortle shell bowls", "Wobbegong Oil", "Alaea Sea Salt",
                 "Bundles of Bamboo", "Sliced Mushrooms", "Ancestral Energy"};
         int[] soupIngredients = new int[8];
-        int[] smallestItemArray = new int[4]; // Smallest Item, Amount, Second Smallest, Amount
+        int[] smallestItemArray;
 
+        boolean stop = false;
         int sharkSoup;
         boolean areIngredientsEqual = false;
 
@@ -219,24 +210,44 @@ public class SharkSoupCalc {
         sharkSoup = calculateSharkSoup(soupIngredients, 0);
 
         while (!areIngredientsEqual) {
-            smallestItemArray = findSmallestNumbers(soupIngredients);
-            soupIngredients = calculateOilTransmutation(soupIngredients, smallestItemArray);
+
+            soupIngredients = calculateOilTransmutation(soupIngredients);
+            sharkSoup = calculateSharkSoup(soupIngredients, sharkSoup);
+
+            soupIngredients = calculateShellsTransmutation(soupIngredients);
             sharkSoup = calculateSharkSoup(soupIngredients, sharkSoup);
 
             smallestItemArray = findSmallestNumbers(soupIngredients);
-            soupIngredients = calculateShellsTransmutation(soupIngredients, smallestItemArray);
-            sharkSoup = calculateSharkSoup(soupIngredients, sharkSoup);
 
-            if (smallestItemArray[0] == 2 && soupIngredients[2] < 10) {
+            //Debug Code
+//            if(stop == false){
+//                System.out.print(smallestItemArray[0] + "            " + smallestItemArray[1] + "            "
+//                  + smallestItemArray[2] + "            " + smallestItemArray[3] + "            " + sharkSoup);
+//                for (int i = 0; i <= 5; i++) {
+//                    System.out.printf("\n%s %s", soupIngredientsNames[i], +soupIngredients[i]);
+//                }
+//                stop = true;
+//
+//            }
+
+            if (smallestItemArray[0] == 1 && (soupIngredients[2] <30 || soupIngredients[5] < 10)&& soupIngredients[0]<10) {
                 break;
-            } else if (smallestItemArray[0] == 1 && soupIngredients[2] < 30 && soupIngredients[0] < 10) {
+            } else if ( smallestItemArray[0] == 0 &&
+                        soupIngredients[1] < 10 &&
+                        (soupIngredients[2] < 30 || (soupIngredients[5] < 50))){
                 break;
-            } else if (smallestItemArray[0] == 0 && soupIngredients[1] < 20) {
+            } else if (soupIngredients[2]==0 || soupIngredients[3]==0 || soupIngredients[4] == 0) {
                 break;
-            } else if (smallestItemArray[0] == 3 || smallestItemArray[0] == 4) {
+            } else if ( soupIngredients[0] == 0 &&
+                        (soupIngredients[5] < 10 || (soupIngredients[1] < 20 && soupIngredients[2]<30))){
+                break;
+            } else if (soupIngredients[1] == 0 && (soupIngredients[5] < 20 || soupIngredients[2] < 30)){
                 break;
             }
         }
+
+        sharkSoup = calculateSharkSoup(soupIngredients, sharkSoup);
+
         System.out.printf("\n");
         if (soupIngredients[7] > 0) {
             System.out.printf("Transmute oil %s times using %s salt and %s energy\n", soupIngredients[7],
@@ -250,7 +261,8 @@ public class SharkSoupCalc {
         System.out.printf("\nTotal amount of soups: %s", sharkSoup);
         System.out.printf("\n\nRemaining Items");
         for (int i = 0; i <= 5; i++) {
-            System.out.printf("\n%s %s", soupIngredientsNames[i], +soupIngredients[i]);
+            System.out.printf("\n%1s\t%s",soupIngredients[i], soupIngredientsNames[i]);
         }
+        System.out.printf("\n");
     }
 }
